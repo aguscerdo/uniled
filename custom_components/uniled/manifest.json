@@ -19,6 +19,12 @@
     },
     {
       "local_name": "SP1*"
+    },
+    {
+      "local_name": "SP5*"
+    },
+    {
+      "local_name": "SP6*"
     }
   ],
   "codeowners": [
@@ -43,7 +49,8 @@
     "uniled_scanner"
   ],
   "requirements": [
+    "async-timeout>=4.0.3",
     "pycryptodome>=3.17"
   ],
-  "version": "3.1.1"
+  "version": "3.2.0-beta.9"
 }

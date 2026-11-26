@@ -79,8 +79,8 @@ class UniledBleModel(UniledModel):
 
     def match_ble_device(
         self, device: BLEDevice, advertisement: AdvertisementData | None = None
-    ) -> bool:
-        """Is a BLE device supported by UniLED."""
+    ) -> UniledBleModel | bool | None:
+        """Return a model for a specific match or True for a shared signature."""
         if not hasattr(advertisement, "manufacturer_data"):
             return False
         for mid, data in advertisement.manufacturer_data.items():
@@ -172,6 +172,7 @@ class UniledBleDevice(UniledDevice):
             match = model.match_ble_device(device, advertisement)
 
             if isinstance(match, UniledBleModel):
+                # A specific model match takes precedence over shared signatures.
                 _LOGGER.debug(
                     "Device '%s' (%s) identified as '%s', by %s.",
                     device.address,
@@ -179,7 +180,7 @@ class UniledBleDevice(UniledDevice):
                     match.model_name,
                     match.manufacturer,
                 )
-                found = match
+                return match
             elif match is True:
                 if found is not None:
                     if found := UniledBleDevice.match_model_name(device.name):
@@ -264,6 +265,10 @@ class UniledBleDevice(UniledDevice):
         """Get the name of the device."""
         if not self._ble_device:
             return self.model_name
+        if getattr(getattr(self, "_model", None), "use_model_name", False):
+            # The advertised name of these devices is unreliable (e.g. "LMB" or
+            # a truncated name), so name them after the model instead.
+            return self.human_readable_name(self.model_name, "", self._ble_device.address)
         return self._ble_device.name or self._ble_device.address
 
     @property
@@ -501,10 +506,12 @@ class UniledBleDevice(UniledDevice):
         for command in commands:
             if self._client.is_connected and command:
                 _LOGGER.debug("%s: => %s (%d)", self.name, command.hex(), len(command))
+                # SP661E only answers queries written without response.
                 reply = await self._client.write_gatt_char(
-                    self._write_char, command, True
-                )  # None)
-                # await self._client.write_gatt_char(self._write_char, command, False) # Do not use!
+                    self._write_char,
+                    command,
+                    getattr(self._model, "write_with_response", True),
+                )
                 if reply is not None:
                     _LOGGER.debug("%s: Command Reply: %s", self.name, repr(reply))
                 if to_send > 1:

@@ -93,6 +93,9 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the UNILED component."""
+    from .light import async_register_services
+
+    async_register_services(hass)
 
     # domain_data = hass.data.setdefault(DOMAIN, {})
     # domain_data[UNILED_DISCOVERY] = await async_discover_devices(
