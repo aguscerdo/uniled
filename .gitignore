@@ -143,3 +143,6 @@ tests/dump.txt
 tests/sok.py
 custom_components/__pycache__
 custom_components/uniled/main.py
+
+# Filesystem
+.idea
